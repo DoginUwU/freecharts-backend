@@ -1,4 +1,5 @@
 import { container } from "tsyringe";
-import { FileServerStorage } from "./storage/FileServerStorage";
+import { GoogleBucketStorage } from "./storage/GoogleBucketStorage";
 
-export const storage = container.resolve(FileServerStorage);
+// export const storage = container.resolve(FileServerStorage);
+export const storage = container.resolve(GoogleBucketStorage);
