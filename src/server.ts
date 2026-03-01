@@ -1,5 +1,7 @@
-import "express-async-errors";
 import "dotenv/config";
+import "./services/extern/sentry";
+
+import "express-async-errors";
 import "reflect-metadata";
 import express from "express";
 import cors from "cors";
@@ -7,8 +9,11 @@ import { baseRoutes } from "./routes/base.route";
 import { airfieldRoutes } from "./routes/airfields.route";
 import { providerMiddleware } from "./middlewares/provider.middleware";
 import { errorMiddleware } from "./middlewares/error.middleware";
+import * as Sentry from "@sentry/node";
 
 const app = express();
+
+Sentry.setupExpressErrorHandler(app);
 
 app.use(cors());
 app.use(express.json());

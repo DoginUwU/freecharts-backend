@@ -12,6 +12,7 @@ import { AppError } from "../../errors";
 import { redis } from "../../services/extern/redis";
 import { ProviderEngine, SupportedProviderEngines } from "../ProviderEngine";
 import { storage } from "../../config";
+import * as Sentry from "@sentry/node";
 
 const parser = new XMLParser({
   ignoreAttributes: false,
@@ -39,6 +40,18 @@ export class AisWebEngine extends ProviderEngine {
         Accept: "*/*",
       },
     });
+
+    this.api.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        Sentry.captureException(error, {
+          tags: {
+            provider: this.code,
+          },
+        });
+        return Promise.reject(error);
+      },
+    );
   }
 
   public get code(): SupportedProviderEngines {
