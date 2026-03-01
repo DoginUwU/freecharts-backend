@@ -1,5 +1,4 @@
 import "dotenv/config";
-import "./services/extern/sentry";
 
 import "express-async-errors";
 import "reflect-metadata";
@@ -10,6 +9,10 @@ import { airfieldRoutes } from "./routes/airfields.route";
 import { providerMiddleware } from "./middlewares/provider.middleware";
 import { errorMiddleware } from "./middlewares/error.middleware";
 import * as Sentry from "@sentry/node";
+
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+});
 
 const app = express();
 
