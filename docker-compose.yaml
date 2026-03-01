@@ -1,13 +1,13 @@
 services:
-  dragonflydata:
-    image: 'docker.dragonflydb.io/dragonflydb/dragonfly'
+  redis:
+    image: redis:8-alpine
     ulimits:
       memlock: -1
     ports:
       - "6379:6379"
     volumes:
-      - 'dragonflydata:/data'
+      - 'redis:/data'
 
 volumes:
-  dragonflydata:
+  redis:
     driver: local

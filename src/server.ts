@@ -18,6 +18,8 @@ app.use("/airfields", providerMiddleware, airfieldRoutes);
 
 app.use(errorMiddleware);
 
-app.listen(3000, () => {
-  console.log(`Listen in http://localhost:${3000}`);
+const port = process.env.PORT || 3000;
+
+app.listen(port, () => {
+  console.log(`Listen in http://localhost:${port}`);
 });

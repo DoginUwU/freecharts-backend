@@ -14,7 +14,9 @@ export class SupabaseStorage extends Storage {
       process.env.SUPABASE_API_KEY as string,
     );
 
-    this.storage = supabase.storage.from("freecharts");
+    this.storage = supabase.storage.from(
+      process.env.SUPABASE_STORAGE_NAME as string,
+    );
   }
 
   public async upload(
