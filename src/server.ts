@@ -16,13 +16,13 @@ Sentry.init({
 
 const app = express();
 
-Sentry.setupExpressErrorHandler(app);
-
 app.use(cors());
 app.use(express.json());
 
 app.use(baseRoutes);
 app.use("/airfields", providerMiddleware, airfieldRoutes);
+
+Sentry.setupExpressErrorHandler(app);
 
 app.use(errorMiddleware);
 
