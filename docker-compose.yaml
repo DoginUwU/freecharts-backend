@@ -8,6 +8,15 @@ services:
     volumes:
       - 'redis:/data'
 
+  mongo:
+    image: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - 'mongo:/data/db'
+
 volumes:
   redis:
+    driver: local
+  mongo:
     driver: local

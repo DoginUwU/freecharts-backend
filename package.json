@@ -9,7 +9,8 @@
   "scripts": {
     "dev": "nodemon -I --exec tsx ./src/server.ts",
     "build": "esbuild src/server.ts --bundle --platform=node --format=esm --packages=external --outfile=dist/server.js",
-    "serve": "node ./dist/server.js"
+    "serve": "node ./dist/server.js",
+    "populate": "tsx ./src/populate/index.ts"
   },
   "dependencies": {
     "@google-cloud/storage": "^7.16.0",
@@ -23,6 +24,7 @@
     "fast-xml-parser": "^4.5.1",
     "ioredis": "^5.4.2",
     "jose": "^5.9.6",
+    "mongoose": "^9.2.4",
     "reflect-metadata": "^0.2.2",
     "tsyringe": "^4.8.0",
     "xml2js": "^0.6.2",

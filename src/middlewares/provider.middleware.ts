@@ -5,10 +5,13 @@ import {
 } from "../engines/ProviderEngine";
 import { container } from "tsyringe";
 import { AisWebEngine } from "../engines/providers/AisWebEngine";
+import { GeoEngine } from "../engines/GeoEngine";
 
 const providers: Record<SupportedProviderEngines, ProviderEngine> = {
   aisweb: container.resolve(AisWebEngine),
 };
+
+const geoProvider = container.resolve(GeoEngine);
 
 export function providerMiddleware(
   req: Request,
@@ -28,6 +31,7 @@ export function providerMiddleware(
   }
 
   req.provider = providerInstance;
+  req.geoEngine = geoProvider;
 
   next();
 }
