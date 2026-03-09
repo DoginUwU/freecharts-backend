@@ -4,7 +4,7 @@ import { singleton } from "tsyringe";
 import { AppError } from "../errors";
 import { redis } from "../services/extern/redis";
 import { AirportModel } from "../models/AirportModel";
-import { OverpassIntercepterData } from "../@types/geo.types";
+import osmtogeojson from "osmtogeojson";
 
 const DEFAULT_CACHE_TTL = 60 * 60 * 24 * 3; // 3d
 
@@ -34,7 +34,7 @@ export class GeoEngine {
     );
   }
 
-  public async loadAirportOSM(icao: string): Promise<OverpassIntercepterData> {
+  public async loadAirportOSM(icao: string): Promise<unknown> {
     const cacheKey = `geo:airportOSM:${icao.toUpperCase()}`;
     const cachedData = await redis.get(cacheKey);
 
@@ -44,33 +44,28 @@ export class GeoEngine {
 
     const airport = await AirportModel.findOne({
       icao: icao.toUpperCase(),
-    }).lean();
+    });
+
     if (!airport) {
       throw new AppError("Airport not found", 404);
     }
 
-    const { latitude: lat, longitude: lon } = airport;
+    const invalidAirportTypes = ["seaplane_base", "heliport"];
+    if (
+      airport.airportType &&
+      invalidAirportTypes.includes(airport.airportType)
+    ) {
+      throw new AppError(
+        `Airport type "${airport.airportType}" is not supported.`,
+        400,
+      );
+    }
 
-    const query = `
-    [out:json];
-    (
-      way["aeroway"](around:5000, ${lat}, ${lon});
-      relation["aeroway"](around:5000, ${lat}, ${lon});
-    );
-    out geom;
-    `;
+    const data = await airport.populateGeoJSON();
+    const geojson = osmtogeojson(data);
 
-    const { data } = await this.api.get<OverpassIntercepterData>(
-      "https://overpass-api.de/api/interpreter",
-      {
-        params: {
-          data: query,
-        },
-      },
-    );
+    await redis.set(cacheKey, JSON.stringify(geojson), "EX", DEFAULT_CACHE_TTL);
 
-    await redis.set(cacheKey, JSON.stringify(data), "EX", DEFAULT_CACHE_TTL);
-
-    return data;
+    return geojson;
   }
 }

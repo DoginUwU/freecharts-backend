@@ -10,14 +10,13 @@ async function runPopulate() {
   const response = await fetch(AIRPORTS_DATA_CSV);
   const csvData = await response.text();
 
-  await AirportModel.deleteMany({});
-
   console.log("Parsing CSV data...");
   const lines = csvData.split("\n");
   const airports: AirportModel[] = [];
 
   const ID_INDEX = 0;
   const ICAO_INDEX = 1;
+  const TYPE = 2;
   const NAME_INDEX = 3;
   const LATITUDE_INDEX = 4;
   const LONGITUDE_INDEX = 5;
@@ -47,12 +46,30 @@ async function runPopulate() {
       elevation: isNaN(parseInt(values[ELEVATION_INDEX]))
         ? null
         : parseInt(values[ELEVATION_INDEX]),
+      airportType: values[TYPE],
+      geojson: null,
     };
     airports.push(airport);
   }
 
-  console.log(`Inserting ${airports.length} airports into the database...`);
-  await AirportModel.insertMany(airports);
+  console.log(`Upserting ${airports.length} airports into the database...`);
+  const bulkOps = airports.map((airport) => ({
+    updateOne: {
+      filter: { icao: airport.icao },
+      update: {
+        $set: {
+          externalId: airport.externalId,
+          name: airport.name,
+          latitude: airport.latitude,
+          longitude: airport.longitude,
+          elevation: airport.elevation,
+          airportType: airport.airportType,
+        },
+      },
+      upsert: true,
+    },
+  }));
+  await AirportModel.bulkWrite(bulkOps);
 }
 
 runPopulate()

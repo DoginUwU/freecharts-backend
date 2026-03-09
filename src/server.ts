@@ -28,7 +28,7 @@ Sentry.setupExpressErrorHandler(app);
 
 app.use(errorMiddleware);
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3002;
 
 app.listen(port, () => {
   console.log(`Listen in http://localhost:${port}`);
