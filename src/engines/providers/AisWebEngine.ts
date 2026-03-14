@@ -9,9 +9,8 @@ import {
   AisWebAirfieldXML,
 } from "../../@types/providers/aisweb";
 import { AppError } from "../../errors";
-import { redis } from "../../services/extern/redis";
 import { ProviderEngine, SupportedProviderEngines } from "../ProviderEngine";
-import { storage } from "../../config";
+import { cache, storage } from "../../config";
 import * as Sentry from "@sentry/node";
 
 const parser = new XMLParser({
@@ -70,8 +69,13 @@ export class AisWebEngine extends ProviderEngine {
     const redisKey = `airfield:${icao.toUpperCase()}`;
     let data: string;
 
-    if (await redis.exists(redisKey)) {
-      data = (await redis.get(redisKey))!;
+    const cachedData = await cache.get<string>(redisKey).catch((err) => {
+      console.error("Error accessing cache:", err);
+      return null;
+    });
+
+    if (cachedData) {
+      data = cachedData;
     } else {
       const response = await this.api.get("/", {
         params: {
@@ -87,7 +91,9 @@ export class AisWebEngine extends ProviderEngine {
 
     if (!aisweb) throw new AppError("Failed to parse data from provider", 500);
 
-    await redis.set(redisKey, data, "EX", DEFAULT_CACHE_TTL);
+    await cache.set(redisKey, data, DEFAULT_CACHE_TTL).catch((err) => {
+      console.error("Error setting cache:", err);
+    });
 
     return {
       icao: aisweb.AeroCode,
@@ -107,8 +113,13 @@ export class AisWebEngine extends ProviderEngine {
     const redisKey = `airfield:charts:${icao.toUpperCase()}`;
     let data: string;
 
-    if (await redis.exists(redisKey)) {
-      data = (await redis.get(redisKey))!;
+    const cachedData = await cache.get<string>(redisKey).catch((err) => {
+      console.error("Error accessing cache:", err);
+      return null;
+    });
+
+    if (cachedData) {
+      data = cachedData;
     } else {
       const response = await this.api.get("/", {
         params: {
@@ -124,7 +135,9 @@ export class AisWebEngine extends ProviderEngine {
 
     if (!aisweb) throw new AppError("Failed to parse data from provider", 500);
 
-    await redis.set(redisKey, data, "EX", DEFAULT_CACHE_TTL);
+    await cache.set(redisKey, data, DEFAULT_CACHE_TTL).catch((err) => {
+      console.error("Error setting cache:", err);
+    });
 
     return aisweb.cartas.item.map((chart) => ({
       id: this.createChartId(chart.nome, icao),
@@ -147,7 +160,12 @@ export class AisWebEngine extends ProviderEngine {
     const redisKey = `airfield:charts:${icao.toUpperCase()}:${chartId}`;
     const filePath = `charts/${chartId}.pdf`;
 
-    if (await redis.exists(redisKey)) {
+    const cachedData = await cache.get<string>(redisKey).catch((err) => {
+      console.error("Error accessing cache:", err);
+      return null;
+    });
+
+    if (cachedData) {
       return await storage.read(filePath);
     }
 
@@ -169,7 +187,9 @@ export class AisWebEngine extends ProviderEngine {
       throw new AppError("Failed to retrieve pdf", 500);
     }
 
-    await redis.set(redisKey, "FOUNDED", "EX", DEFAULT_CACHE_TTL);
+    await cache.set(redisKey, "FOUNDED", DEFAULT_CACHE_TTL).catch((err) => {
+      console.error("Error setting cache:", err);
+    });
 
     await storage.upload(filePath, data);
 

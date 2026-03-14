@@ -2,9 +2,9 @@ import * as Sentry from "@sentry/node";
 import axios, { AxiosInstance } from "axios";
 import { singleton } from "tsyringe";
 import { AppError } from "../errors";
-import { redis } from "../services/extern/redis";
 import { AirportModel } from "../models/AirportModel";
 import osmtogeojson from "osmtogeojson";
+import { cache } from "../config";
 
 const DEFAULT_CACHE_TTL = 60 * 60 * 24 * 3; // 3d
 
@@ -36,7 +36,10 @@ export class GeoEngine {
 
   public async loadAirportOSM(icao: string): Promise<unknown> {
     const cacheKey = `geo:airportOSM:${icao.toUpperCase()}`;
-    const cachedData = await redis.get(cacheKey);
+    const cachedData = await cache.get<string>(cacheKey).catch((err) => {
+      console.error("Error accessing cache:", err);
+      return null;
+    });
 
     if (cachedData) {
       return JSON.parse(cachedData);
@@ -64,7 +67,11 @@ export class GeoEngine {
     const data = await airport.populateGeoJSON();
     const geojson = osmtogeojson(data);
 
-    await redis.set(cacheKey, JSON.stringify(geojson), "EX", DEFAULT_CACHE_TTL);
+    await cache
+      .set(cacheKey, JSON.stringify(geojson), DEFAULT_CACHE_TTL)
+      .catch((err) => {
+        console.error("Error setting cache:", err);
+      });
 
     return geojson;
   }
