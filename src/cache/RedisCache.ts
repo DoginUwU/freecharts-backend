@@ -14,6 +14,10 @@ export class RedisCache extends Cache {
     this.redis.on("error", (err) => {
       console.error("Redis error:", err);
     });
+
+    this.redis.on("connect", () => {
+      console.log("Connected to Redis");
+    });
   }
 
   public async get<T>(key: string): Promise<T | null> {

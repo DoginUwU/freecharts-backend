@@ -1,5 +1,6 @@
 import axios, { AxiosError } from "axios";
 import { OverpassIntercepterData } from "../../@types/geo.types";
+import { container, singleton } from "tsyringe";
 
 const MIRRORS = [
   "https://overpass-api.de/api/",
@@ -9,6 +10,7 @@ const MIRRORS = [
   "https://overpass.kumi.systems/api/interpreter",
 ];
 
+@singleton()
 class OverpassService {
   async fetchInterpreter(query: string): Promise<OverpassIntercepterData> {
     let mirrorIndex = 0;
@@ -42,4 +44,4 @@ class OverpassService {
   }
 }
 
-export const overpassService = new OverpassService();
+export const overpassService = container.resolve(OverpassService);
